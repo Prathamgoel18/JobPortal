@@ -1,6 +1,8 @@
 import { User } from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import getDataUri from "../utils/dataUri.js";
+import cloudinary from "../utils/cloudinary.js";
 
 export const register = async (req, res) => {
     try {
@@ -12,6 +14,9 @@ export const register = async (req, res) => {
                 success: false
             });
         };
+        const file = req.file;
+        const fileUri = getDataUri(file);
+        const cloudResponse = await cloudinary.uploader.upload(fileUri.content);
         const user = await User.findOne({ email });
         if (user) {
             return res.status(400).json({
@@ -26,6 +31,9 @@ export const register = async (req, res) => {
             phoneNumber,
             password: hashedPassword,
             role,
+            profile:{
+                profilePhoto:cloudResponse.secure_url,
+            }
         });
 
         return res.status(201).json({
@@ -106,11 +114,13 @@ export const updateProfile = async (req, res) => {
     try {
         const { fullname, email, phoneNumber, bio, skills } = req.body;
         const file = req.file;
+        const fileUri = getDataUri(file);
+        const cloudResponse = await cloudinary.uploader.upload(fileUri.content);
 
         //Cloudinary will come
         let skillsArray;
         if(skills){
-            skillArray = skills.split(",");
+            skillsArray = skills.split(",");
         }
         
         const userId = req.id; // it will come from middleware authentication
@@ -129,6 +139,10 @@ export const updateProfile = async (req, res) => {
        if(skills) user.profile.skills = skillsArray 
 
         //Resume comes later
+        if(cloudResponse){
+            user.profile.resume = cloudResponse.secure_url //save cloudinaru url
+            user.profile.resumeOriginalName = file.originalname //It will save the original file name
+        }
 
         await user.save();
         user = {
