@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux';
 import { toast } from 'sonner';
 import { APPLICATION_API_END_POINT } from '@/utils/constant';
 import axios from 'axios';
-
+//For Applicants Table
 const shortlistingStatus = ["Accepted", "Rejected"];
 
 const ApplicantsTable = () => {
